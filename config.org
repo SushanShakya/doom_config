@@ -1,12 +1,13 @@
 #+TITLE: Emacs Keybindings
 #+AUTHOR: Sushan Shakya
+#+PROPERTY: header-args:elisp :tangle ./config.el
 #+DESCRIPTION: EMACS Key Bindings to use with DOOM
 
 * Theme
 
 ** Doom Theme
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (setq doom-theme 'doom-one)
 
@@ -14,20 +15,53 @@
 
 ** Font Family
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (setq doom-font (font-spec :family "Agave Nerd Font" :size 18))
 
 #+END_SRC
 
+* Emacs Reload
+
+** Reload Config file only
+
+#+BEGIN_SRC elisp
+
+(defun my/reload-config ()
+  "Reload `config.el` manually without restarting Doom."
+  (interactive)
+  (load-file (expand-file-name "~/.config/doom/config.el")))
+
+
+(map! :leader "h r r" 'my/reload-config)
+
+#+END_SRC
+
+** Reload other configs in doom
+
+#+BEGIN_SRC elisp
+
+(map! :leader "h r R" 'doom/reload)
+
+#+END_SRC
 
 * Workspace
 
 ** Creating New Workspace
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (map! "s-N" '+workspace-new)
+
+#+END_SRC
+
+* Editor
+
+** Relative Line numbering
+
+#+BEGIN_SRC elisp
+
+(setq display-line-numbers-mode 'relative)
 
 #+END_SRC
 
@@ -35,16 +69,20 @@
 
 ** Always Launch Doom in Full screen
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+(add-hook 'after-make-frame-functions
+          (lambda (frame)
+            (set-frame-parameter frame 'fullscreen 'maximized)))
 
 #+END_SRC
 
 ** Delete Buffers
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 
 (map! "s-w" '+workspace/close-window-or-workspace)
 
@@ -52,7 +90,7 @@
 
 ** Restore Buffers
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 
 (defun restore-last-killed-buffer ()
   "Reopen the most recently killed buffer."
@@ -67,9 +105,11 @@
 
 #+end_src
 
+* Treemacs
+
 ** Toggle Treemacs
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 
 (map! "s-e" '+treemacs/toggle)
 (map! "s-b" '+treemacs/toggle)
@@ -77,20 +117,46 @@
 
 #+end_src
 
+** Relative Line Numbering
+
+#+BEGIN_SRC elisp
+
+(with-eval-after-load 'treemacs
+  (defun my/enable-linum-in-treemacs ()
+    "Enable line numbers in Treemacs."
+    (display-line-numbers-mode 1))
+
+  (add-hook 'treemacs-mode-hook #'my/enable-linum-in-treemacs))
+
+
+#+END_SRC
+
+* Terminal
+
 ** Toggle Terminal
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 
 (map! "s-u" '+term/toggle)
 
 #+end_src
 
 
+* Command Palette
+
+** Open Comand Palette
+
+#+BEGIN_SRC elisp
+
+(map! "s-P" 'execute-extended-command)
+
+#+END_SRC
+
 * Window Navigation
 
 ** Split Windows
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 
 (map! "s-L" '+evil/window-vsplit-and-follow)
 (map! "s-J" '+evil/window-split-and-follow)
@@ -99,12 +165,12 @@
 
 ** Move between Windows
 
-#+begin_src emacs-lisp
+#+begin_src elisp
 
-(map! "s-j" '+evil/window-move-up)
-(map! "s-k" '+evil/window-move-down)
-(map! "s-h" '+evil/window-move-left)
-(map! "s-l" '+evil/window-move-right)
+(map! "s-j" 'evil-window-down)
+(map! "s-k" 'evil-window-up)
+(map! "s-h" 'evil-window-left)
+(map! "s-l" 'evil-window-right)
 
 #+end_src
 
@@ -113,7 +179,7 @@
 
 ** Interoperate copy & paste between system clipboard
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (global-set-key (kbd "s-c") 'kill-ring-save)   ;; Copy
 (global-set-key (kbd "s-v") 'yank)             ;; Paste
@@ -124,7 +190,7 @@
 
 ** Duplicate Lines Down
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (defun my/duplicate-lines-down ()
   "Duplicate the selected region or current line below, keeping the new region selected."
@@ -160,7 +226,7 @@
 
 ** Comment the selected lines
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (defun my/comment-region-and-keep-selection ()
   "Comment the selected region or the current line, maintaining selection."
@@ -191,7 +257,7 @@
 
 ** VIM Bindings for Completion
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC elisp
 
 (use-package vertico
   :ensure t
@@ -204,3 +270,17 @@
   (vertico-mode))
 
 #+END_SRC
+
+* Auto Tangle ORG to .el
+
+This ensures that `config.el` is always up to date.
+
+#+begin_src elisp :tangle no
+(defun my/org-babel-tangle-config ()
+  "Auto-tangle `config.org` when saved."
+  (when (string-equal (buffer-file-name)
+                      (expand-file-name "~/.config/doom/config.org"))
+    (org-babel-tangle)))
+
+(add-hook 'after-save-hook #'my/org-babel-tangle-config)
+#+end_src
