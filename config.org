@@ -1,0 +1,206 @@
+#+TITLE: Emacs Keybindings
+#+AUTHOR: Sushan Shakya
+#+DESCRIPTION: EMACS Key Bindings to use with DOOM
+
+* Theme
+
+** Doom Theme
+
+#+BEGIN_SRC emacs-lisp
+
+(setq doom-theme 'doom-one)
+
+#+END_SRC
+
+** Font Family
+
+#+BEGIN_SRC emacs-lisp
+
+(setq doom-font (font-spec :family "Agave Nerd Font" :size 18))
+
+#+END_SRC
+
+
+* Workspace
+
+** Creating New Workspace
+
+#+BEGIN_SRC emacs-lisp
+
+(map! "s-N" '+workspace-new)
+
+#+END_SRC
+
+* Windows
+
+** Always Launch Doom in Full screen
+
+#+BEGIN_SRC emacs-lisp
+
+(add-to-list 'initial-frame-alist '(fullscreen . maximized))
+(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+#+END_SRC
+
+** Delete Buffers
+
+#+begin_src emacs-lisp
+
+(map! "s-w" '+workspace/close-window-or-workspace)
+
+#+end_src
+
+** Restore Buffers
+
+#+begin_src emacs-lisp
+
+(defun restore-last-killed-buffer ()
+  "Reopen the most recently killed buffer."
+  (interactive)
+  (let ((recently-killed (car kill-ring)))
+    (if recently-killed
+        (find-file recently-killed)
+      (message "No recently killed buffer to restore."))))
+
+
+(map! "s-T" 'restore-last-killed-buffer)
+
+#+end_src
+
+** Toggle Treemacs
+
+#+begin_src emacs-lisp
+
+(map! "s-e" '+treemacs/toggle)
+(map! "s-b" '+treemacs/toggle)
+(map! :leader "e" '+treemacs/toggle)
+
+#+end_src
+
+** Toggle Terminal
+
+#+begin_src emacs-lisp
+
+(map! "s-u" '+term/toggle)
+
+#+end_src
+
+
+* Window Navigation
+
+** Split Windows
+
+#+begin_src emacs-lisp
+
+(map! "s-L" '+evil/window-vsplit-and-follow)
+(map! "s-J" '+evil/window-split-and-follow)
+
+#+end_src
+
+** Move between Windows
+
+#+begin_src emacs-lisp
+
+(map! "s-j" '+evil/window-move-up)
+(map! "s-k" '+evil/window-move-down)
+(map! "s-h" '+evil/window-move-left)
+(map! "s-l" '+evil/window-move-right)
+
+#+end_src
+
+
+* Copy Paste
+
+** Interoperate copy & paste between system clipboard
+
+#+BEGIN_SRC emacs-lisp
+
+(global-set-key (kbd "s-c") 'kill-ring-save)   ;; Copy
+(global-set-key (kbd "s-v") 'yank)             ;; Paste
+(global-set-key (kbd "s-x") 'kill-region)      ;; Cut
+(global-set-key (kbd "s-a") 'mark-whole-buffer) ;; Select All
+
+#+END_SRC
+
+** Duplicate Lines Down
+
+#+BEGIN_SRC emacs-lisp
+
+(defun my/duplicate-lines-down ()
+  "Duplicate the selected region or current line below, keeping the new region selected."
+  (interactive)
+  (if (use-region-p)
+      (let* ((beg (region-beginning))
+             (end (region-end))
+             (beg-line (progn (goto-char beg) (line-beginning-position)))
+             (end-line (progn (goto-char end) (line-end-position))))
+        (let ((text (buffer-substring beg-line end-line)))
+          (goto-char end-line)
+          (newline)
+          (insert text)
+          ;; Keep the newly duplicated region selected
+          (set-mark end-line)
+          (goto-char (+ end-line (length text)))))
+    ;; Duplicate single line if no region is selected
+    (let* ((line (buffer-substring (line-beginning-position) (line-end-position)))
+           (pos (point))) ;; Save cursor position
+      (end-of-line)
+      (newline)
+      (insert line)
+      ;; Move cursor down to the new line
+      (goto-char (+ pos (length line)))
+      (set-mark (line-beginning-position)))))
+
+(map! "s-d" 'my/duplicate-lines-down)
+
+#+END_SRC
+
+
+* Comments
+
+** Comment the selected lines
+
+#+BEGIN_SRC emacs-lisp
+
+(defun my/comment-region-and-keep-selection ()
+  "Comment the selected region or the current line, maintaining selection."
+  (interactive)
+  (if (use-region-p)
+      (let* ((beg (region-beginning))
+             (end (region-end))
+             (beg-line (progn (goto-char beg) (line-beginning-position)))
+             (end-line (progn (goto-char end) (line-end-position))))
+        ;; Comment the selected region
+        (comment-or-uncomment-region beg-line end-line)
+        ;; Maintain selection
+        (goto-char end-line)
+        (set-mark beg-line))
+    ;; If no region is selected, comment the current line
+    (let ((line-start (line-beginning-position))
+          (line-end (line-end-position)))
+      (comment-or-uncomment-region line-start line-end)
+      (goto-char line-start)
+      (set-mark line-end))))
+
+(map! "s-/" 'my/comment-region-and-keep-selection)
+
+#+END_SRC
+
+
+* Completion
+
+** VIM Bindings for Completion
+
+#+BEGIN_SRC emacs-lisp
+
+(use-package vertico
+  :ensure t
+  :bind (:map vertico-map
+              ("s-j" . vertico-next)
+              ("s-k" . vertico-previous))
+  :custom
+  (vertico-cycle t)
+  :init
+  (vertico-mode))
+
+#+END_SRC
