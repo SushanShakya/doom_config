@@ -2,6 +2,9 @@
 
 (setq doom-font (font-spec :family "Agave Nerd Font" :size 18))
 
+(custom-set-faces
+ '(hl-line ((t (:background "#444"))))) ;; Change background color
+
 (defun my/reload-config ()
   "Reload `config.el` manually without restarting Doom."
   (interactive)
@@ -14,6 +17,10 @@
 
 (map! "s-N" '+workspace-new)
 
+(map! "s-P" 'projectile-switch-project)
+
+(map! "s-p" 'projectile-find-file)
+
 (setq display-line-numbers-mode 'relative)
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
@@ -23,7 +30,49 @@
           (lambda (frame)
             (set-frame-parameter frame 'fullscreen 'maximized)))
 
-(map! "s-w" '+workspace/close-window-or-workspace)
+;; (defun +workspa ce/close-window-or-workspace ()
+;;   "Close the selected window. If it's the last window in the workspace, either
+;; close the workspace (as well as its associated frame, if one exists) and move to
+;; the next."
+;;   (interactive)
+;;   (let ((delete-window-fn (if (featurep 'evil) #'evil-window-delete #'delete-window)))
+;;     (if (window-dedicated-p)
+;;         (funcall delete-window-fn)
+;;       (let ((current-persp-name (+workspace-current-name)))
+;;         (cond ((or (+workspace--protected-p current-persp-name)
+;;                    (cdr (doom-visible-windows)))
+;;                (funcall delete-window-fn))
+
+;;               ((cdr (+workspace-list-names))
+;;                (let ((frame-persp (frame-parameter nil 'workspace)))
+;;                  (if (string= frame-persp (+workspace-current-name))
+;;                      (delete-frame)
+;;                    (+workspace/kill current-persp-name))))
+
+;;               ((+workspace-er
+                ;; ror "Can't delete last workspace" t)))))))
+
+(defun my/close-window-or-workspace ()
+  "Close the selected window. If it's the last window in the workspace, either
+close the workspace, but without deleting the frame."
+  (interactive)
+  (let ((delete-window-fn (if (featurep 'evil) #'evil-window-delete #'delete-window)))
+    (if (window-dedicated-p)
+        (funcall delete-window-fn)
+      (let ((current-persp-name (+workspace-current-name)))
+        (cond ((or (+workspace--protected-p current-persp-name)
+                   (cdr (doom-visible-windows)))
+               (funcall delete-window-fn))
+
+              ((cdr (+workspace-list-names))
+               (+workspace/kill current-persp-name))
+
+              ;; Keep this for handling the case of the last workspace
+              ((+workspace-error "Can't delete last workspace" t)))))))
+
+
+
+(map! "s-w" 'my/close-window-or-workspace)
 
 (defun restore-last-killed-buffer ()
   "Reopen the most recently killed buffer."
@@ -100,18 +149,15 @@
              (beg-line (progn (goto-char beg) (line-beginning-position)))
              (end-line (progn (goto-char end) (line-end-position))))
         ;; Comment the selected region
-        (comment-or-uncomment-region beg-line end-line)
-        ;; Maintain selection
-        (goto-char end-line)
-        (set-mark beg-line))
+        (comment-or-uncomment-region beg-line end-line))
     ;; If no region is selected, comment the current line
     (let ((line-start (line-beginning-position))
           (line-end (line-end-position)))
-      (comment-or-uncomment-region line-start line-end)
-      (goto-char line-start)
-      (set-mark line-end))))
+      (comment-or-uncomment-region line-start line-end))))
 
-(map! "s-/" 'my/comment-region-and-keep-selection)
+(map! :n "s-/" nil)
+(map! :ni "s-/" 'my/comment-region-and-keep-selection)
+(map! :v "s-/" 'my/comment-region-and-keep-selection)
 
 (use-package vertico
   :ensure t
@@ -122,3 +168,7 @@
   (vertico-cycle t)
   :init
   (vertico-mode))
+
+(map! :leader "T" 'org-babel-tangle)
+
+(map! "s-f" '+evil:swiper)
