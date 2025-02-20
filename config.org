@@ -31,6 +31,7 @@
 
 #+END_SRC
 
+
 * Emacs Reload
 
 ** Reload Config file only
@@ -55,13 +56,14 @@
 
 #+END_SRC
 
+
 * Workspace
 
 ** Creating New Workspace
 
 #+BEGIN_SRC elisp
 
-(map! "s-N" '+workspace-new)
+(map! "s-N" '+workspace/new)
 
 #+END_SRC
 
@@ -92,6 +94,7 @@
 (setq display-line-numbers-mode 'relative)
 
 #+END_SRC
+
 
 * Windows
 
@@ -174,7 +177,24 @@ close the workspace, but without deleting the frame."
 
 #+end_src
 
+** Quit Mode
+#+BEGIN_SRC elisp
+
+(map! "s-q" nil)
+
+(map! "s-q" 'evil-normal-state)
+
+#+END_SRC
+
+
 * Treemacs
+
+** Treemacs Theme
+
+#+BEGIN_SRC elisp
+
+
+#+END_SRC
 
 ** Toggle Treemacs
 
@@ -200,6 +220,7 @@ close the workspace, but without deleting the frame."
 
 #+END_SRC
 
+
 * Terminal
 
 ** Toggle Terminal
@@ -220,6 +241,7 @@ close the workspace, but without deleting the frame."
 (map! "s-P" 'execute-extended-command)
 
 #+END_SRC
+
 
 * Window Navigation
 
@@ -337,6 +359,7 @@ close the workspace, but without deleting the frame."
 
 #+END_SRC
 
+
 * ORG MODE
 
 ** Auto Tangle ORG to .el
@@ -359,6 +382,7 @@ close the workspace, but without deleting the frame."
 
 #+END_SRC
 
+
 * Search Related
 
 ** Find Things in a file
@@ -366,5 +390,22 @@ close the workspace, but without deleting the frame."
 #+BEGIN_SRC elisp
 
 (map! "s-f" '+evil:swiper)
+
+#+END_SRC
+
+
+* Flutter Related Config
+
+** Paths to Flutter
+
+#+BEGIN_SRC elisp
+
+lsp-dart-sdk-dir          ;; location of Dart SDK
+lsp-dart-flutter-sdk-dir  ;; location of Flutter SDK
+flutter-sdk-path          ;; location of Flutter SDK
+
+(setq lsp-dart-sdk-dir "~/Development/flutter/bin/cache/dart-sdk")
+(setq lsp-dart-flutter-sdk "~/Development/flutter")
+(setq flutter-sdk-path "~/Development/flutter")
 
 #+END_SRC

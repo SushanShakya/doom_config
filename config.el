@@ -15,7 +15,7 @@
 
 (map! :leader "h r R" 'doom/reload)
 
-(map! "s-N" '+workspace-new)
+(map! "s-N" '+workspace/new)
 
 (map! "s-P" 'projectile-switch-project)
 
@@ -84,6 +84,12 @@ close the workspace, but without deleting the frame."
 
 
 (map! "s-T" 'restore-last-killed-buffer)
+
+(map! "s-q" nil)
+
+(map! "s-q" 'evil-normal-state)
+
+
 
 (map! "s-e" '+treemacs/toggle)
 (map! "s-b" '+treemacs/toggle)
