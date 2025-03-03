@@ -21,6 +21,9 @@
 
 #+END_SRC
 
+#+RESULTS:
+: #<font-spec nil nil Agave\ Nerd\ Font nil nil nil nil nil 18 nil nil nil nil>
+
 ** Line Highlight
 
 #+BEGIN_SRC elisp
@@ -71,7 +74,7 @@
 
 #+BEGIN_SRC elisp
 
-(map! "s-P" 'projectile-switch-project)
+(map! "s-r" 'projectile-switch-project)
 
 #+END_SRC
 
@@ -85,13 +88,16 @@
 
 
 
+
 * Editor
 
 ** Relative Line numbering
 
 #+BEGIN_SRC elisp
 
-(setq display-line-numbers-mode 'relative)
+(setq display-line-numbers-type 'relative)  ;; Enable relative line numbers
+(global-display-line-numbers-mode 1)        ;; Enable globally
+
 
 #+END_SRC
 
@@ -241,6 +247,8 @@ close the workspace, but without deleting the frame."
 (map! "s-P" 'execute-extended-command)
 
 #+END_SRC
+
+#+RESULTS:
 
 
 * Window Navigation
@@ -394,18 +402,44 @@ close the workspace, but without deleting the frame."
 #+END_SRC
 
 
-* Flutter Related Config
+* LSP related Configs
 
-** Paths to Flutter
+** LSP Mode
 
-#+BEGIN_SRC elisp
+#+begin_src elisp
 
-lsp-dart-sdk-dir          ;; location of Dart SDK
-lsp-dart-flutter-sdk-dir  ;; location of Flutter SDK
-flutter-sdk-path          ;; location of Flutter SDK
+(use-package lsp-mode
+  :commands (lsp lsp-deferred)
+  :init
+  (setq lsp-keymap-prefix "SPC l")
+  :config
+  (lsp-enable-which-key-integration t))
 
-(setq lsp-dart-sdk-dir "~/Development/flutter/bin/cache/dart-sdk")
-(setq lsp-dart-flutter-sdk "~/Development/flutter")
-(setq flutter-sdk-path "~/Development/flutter")
+#+end_src
 
-#+END_SRC
+** Language related configs
+
+*** Dart
+
+#+begin_src elisp
+
+(setq package-selected-packages
+  '(dart-mode lsp-mode lsp-dart lsp-treemacs flycheck company
+    ;; Optional packages
+    lsp-ui company hover))
+
+(when (cl-find-if-not #'package-installed-p package-selected-packages)
+  (package-refresh-contents)
+  (mapc #'package-install package-selected-packages))
+
+
+(add-hook 'dart-mode-hook 'lsp)
+
+(setq gc-cons-threshold (* 100 1024 1024)
+      read-process-output-max (* 1024 1024))
+
+(with-eval-after-load 'projectile
+  (add-to-list 'projectile-project-root-files-bottom-up "pubspec.yaml")
+  (add-to-list 'projectile-project-root-files-bottom-up "BUILD"))
+
+#+end_src

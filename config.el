@@ -17,11 +17,12 @@
 
 (map! "s-N" '+workspace/new)
 
-(map! "s-P" 'projectile-switch-project)
+(map! "s-r" 'projectile-switch-project)
 
 (map! "s-p" 'projectile-find-file)
 
-(setq display-line-numbers-mode 'relative)
+(setq display-line-numbers-type 'relative)  ;; Enable relative line numbers
+(global-display-line-numbers-mode 1)        ;; Enable globally
 
 (add-to-list 'initial-frame-alist '(fullscreen . maximized))
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
@@ -178,3 +179,42 @@ close the workspace, but without deleting the frame."
 (map! :leader "T" 'org-babel-tangle)
 
 (map! "s-f" '+evil:swiper)
+
+(after! lsp-dart
+  (setq lsp-dart-flutter-sdk-dir (string-trim (shell-command-to-string "fvm flutter sdk-path"))))
+
+
+(after! company
+  (setq company-idle-delay 0.1
+        company-minimum-prefix-length 1))
+
+(after! lsp-mode
+  (setq lsp-headerline-breadcrumb-enable t))
+
+
+(map! :leader
+      (:prefix ("m" . "Flutter")
+       :desc "Run Flutter" "r" #'flutter-run
+       :desc "Hot Reload" "R" #'flutter-hot-reload
+       :desc "Hot Restart" "h" #'flutter-hot-restart
+       :desc "Quit Flutter" "q" #'flutter-quit))
+
+
+(after! projectile
+  (add-hook 'projectile-after-switch-project-hook
+            (lambda ()
+              (setq lsp-dart-flutter-sdk-dir (string-trim (shell-command-to-string "fvm flutter sdk-path"))))))
+
+(after! dap-mode
+  (setq dap-dart-flutter-executable (string-trim (shell-command-to-string "fvm flutter"))))
+
+(after! lsp-ui
+  (setq lsp-ui-doc-enable t
+        lsp-ui-sideline-enable t
+        lsp-ui-peek-enable t))
+
+
+(defun restart-lsp ()
+  (interactive)
+  (lsp-restart-workspace))
+(map! :leader "l r" #'restart-lsp)
