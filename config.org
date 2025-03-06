@@ -1,6 +1,6 @@
 #+TITLE: Emacs Keybindings
 #+AUTHOR: Sushan Shakya
-#+PROPERTY: header-args:elisp :tangle ./config.el
+#+PROPERTY: header-args:elisp :tangle ~/.config/doom/config.el
 #+DESCRIPTION: EMACS Key Bindings to use with DOOM
 
 * Theme
