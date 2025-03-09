@@ -390,6 +390,14 @@ close the workspace, but without deleting the frame."
 
 * ORG MODE
 
+** Ditaa
+
+#+BEGIN_SRC elisp
+
+(setq org-babel-ditaa-jar-path "~/Documents/ditaa.jar")
+
+#+END_SRC
+
 ** Auto Tangle ORG to .el
 
 #+begin_src elisp :tangle no
