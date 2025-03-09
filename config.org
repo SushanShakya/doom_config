@@ -469,6 +469,7 @@ close the workspace, but without deleting the frame."
 
 #+end_src
 
+
 * Tabs Related Config
 
 ** Look and Feel
