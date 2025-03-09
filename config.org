@@ -410,6 +410,14 @@ close the workspace, but without deleting the frame."
 
 #+END_SRC
 
+** Keybindings
+
+#+BEGIN_SRC elisp
+
+(map! :i "TAB" nil)                               
+
+#+END_SRC
+
 
 * Search Related
 
@@ -482,6 +490,170 @@ close the workspace, but without deleting the frame."
 (map! "M-n" 'centaur-tabs-forward)
 (map! "M-p" 'centaur-tabs-backward)
 
-(map! :nivm "L" 'centaur-tabs-forward)
-(map! :nivm "H" 'centaur-tabs-backward)            
+(map! :nvm "L" 'centaur-tabs-forward)             
+(map! :nvm "H" 'centaur-tabs-backward)            
+
+(setq transient-mark-mode t)
+                                                  
+#+END_SRC
+
+
+* Flutter Modeline Devices Related Config         
+
+** Flutter Daemon
+
+*** Daemon Reference
+#+BEGIN_SRC elisp
+
+(defvar flutter/daemon nil
+  "Variable to store reference to Flutter Daemon which will be used to launch devices")
+
+(defvar flutter-daemon-buffer "*Flutter Daemon*")
+
+
+#+END_SRC
+
+*** Start Daemon
+
+#+BEGIN_SRC elisp
+
+(defun flutter/start-daemon ()
+  "Starts the Flutter Daemon if it's not running"
+  (unless (and flutter/daemon                     
+               (process-live-p flutter/daemon))
+    (setq flutter/daemon
+          (make-process
+           :name "flutter-daemon"
+           :buffer flutter-daemon-buffer          
+           :command '("flutter" "daemon")
+           :coding 'utf-8
+           :noquery t
+           :filter 'flutter/daemon-filter))       
+    (message "Flutter daemon started.")))
+
+#+END_SRC
+
+*** Stop Daemon
+
+#+BEGIN_SRC elisp
+
+(defun flutter/stop-daemon ()
+  "Stops the Flutter Daemon if it's running"
+  (when (and flutter/daemon
+               (process-live-p flutter/daemon))
+    (kill-process flutter/daemon)
+    (kill-buffer flutter-daemon-buffer)
+    (setq flutter/daemon nil)
+    (message "Flutter daemon stopped.")))
+#+END_SRC                                         
+
+** Flutter Daemon Interaction 
+
+*** Filtering Outputs from the Daemon
+
+#+BEGIN_SRC elisp
+
+(defun flutter/daemon-filter (proc output)
+  "Handle Flutter daemon messages from PROC, processing OUTPUT."
+  (with-current-buffer (process-buffer proc)
+    (goto-char (point-max))
+    (insert output)))
+
+#+END_SRC
+
+*** Sending Messages to the Daemon
+
+#+BEGIN_SRC elisp
+
+(defun flutter/daemon-send-message (json-command) 
+  "Send a JSON command to the Flutter daemon."
+  (when (and flutter/daemon (process-live-p flutter/daemon))
+    (process-send-string flutter/daemon (concat json-command "\n"))))
+
+#+END_SRC
+
+*** Query Flutter Daemon for Emulators
+
+#+BEGIN_SRC elisp
+
+(defun flutter/request-emulator-list ()           
+  "Request available devices and emulators from Flutter daemon."
+  (flutter/daemon-send-message                    
+   (json-encode `[(:id 1 :method "emulator.getEmulators")])
+   )                                              
+  )                                               
+#+END_SRC
+
+*** Parsing the Emulator list from the daemon
+
+#+BEGIN_SRC elisp
+
+(setq global-emulator-list nil)
+(setq devices nil)
+
+(defun flutter/parse-emulator-list-from-daemon ()
+  "Parse the Emulator list from daemon"
+  (with-current-buffer flutter-daemon-buffer
+    (goto-char (point-min))
+    (let (devices)
+      (while (re-search-forward "\\({.*}\\)" nil t)
+        (let* ((json (json-read-from-string (match-string 1)))
+               (result (alist-get 'result json)))
+          (message (prin1-to-string result))
+          (when result
+            (setq devices result))))
+      devices)))
+
+(defun flutter/emulators-from-daemon ()
+  "Parse the device and emulator list from the last line of the Flutter daemon buffer."
+  (flutter/start-daemon)
+  (flutter/request-emulator-list)
+  (sleep-for 0.6) ;; HACK: Required because getting data from flutter daemon is asynchronous (Wait for 600ms so that Flutter Daemon can give us the required information)
+  (setq devices (flutter/parse-emulator-list-from-daemon))
+  (message "--- flutter/parse-emulators-from-daemon")
+  (message (prin1-to-string devices))
+  (flutter/stop-daemon)
+  devices
+)
+
+#+END_SRC
+
+*** Select Emulator Functionality
+
+#+BEGIN_SRC elisp
+
+(defun flutter/emulators ()
+  (if global-emulator-list
+      global-emulator-list
+    (setq global-emulator-list (flutter/emulators-from-daemon))
+    global-emulator-list)
+)
+
+(defun test/emulators ()
+  (interactive)
+  (setq devices (flutter/emulators))
+  (message (prin1-to-string devices)))
+
+(defun test/emulators-from-daemon ()
+  (interactive)
+  (setq devices (flutter/emulators-from-daemon))
+  (message (prin1-to-string devices)))
+
+(defun flutter/run-emulator ()
+  "Show a menu to select a Flutter device or emulator."
+  (interactive)
+  (let* ((devices (flutter/emulators))
+         (choices (mapcar (lambda (d)
+                            (cons (alist-get 'name d) (alist-get 'id d)))
+                          devices))
+         (selection (completing-read "Select a Flutter device: " choices)))
+    (when selection
+      (message "Selected device: %s" selection)
+      (shell-command (format "flutter emulators --launch %s" selection))
+      )
+    )
+  )
+
+
+
 #+END_SRC
