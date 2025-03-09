@@ -499,7 +499,7 @@ close the workspace, but without deleting the frame."
 #+END_SRC
 
 
-* Flutter Modeline Devices Related Config         
+* Flutter Modeline Devices Related Config
 
 ** Flutter Daemon
 
@@ -600,7 +600,6 @@ close the workspace, but without deleting the frame."
       (while (re-search-forward "\\({.*}\\)" nil t)
         (let* ((json (json-read-from-string (match-string 1)))
                (result (alist-get 'result json)))
-          (message (prin1-to-string result))
           (when result
             (setq devices result))))
       devices)))
@@ -611,8 +610,6 @@ close the workspace, but without deleting the frame."
   (flutter/request-emulator-list)
   (sleep-for 0.6) ;; HACK: Required because getting data from flutter daemon is asynchronous (Wait for 600ms so that Flutter Daemon can give us the required information)
   (setq devices (flutter/parse-emulator-list-from-daemon))
-  (message "--- flutter/parse-emulators-from-daemon")
-  (message (prin1-to-string devices))
   (flutter/stop-daemon)
   devices
 )
@@ -656,5 +653,13 @@ close the workspace, but without deleting the frame."
   )
 
 
+
+#+END_SRC
+
+** Keybindings
+
+#+BEGIN_SRC elisp
+
+(map! :leader "d" 'flutter/run-emulator)
 
 #+END_SRC
